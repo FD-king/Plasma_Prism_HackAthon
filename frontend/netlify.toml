@@ -1,0 +1,14 @@
+[build]
+  base    = "frontend"
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_BACKEND_URL = "https://ais-dev-dxnx4xw6eerzez3fln57va-284975905594.asia-east1.run.app"
+
+# SPA fallback so client-side routes still serve index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

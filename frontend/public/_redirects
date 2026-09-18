@@ -1,0 +1,5 @@
+# Proxy API calls to the deployed backend
+/api/*  https://ais-dev-dxnx4xw6eerzez3fln57va-284975905594.asia-east1.run.app/api/:splat  200
+
+# SPA fallback
+/*      /index.html   200

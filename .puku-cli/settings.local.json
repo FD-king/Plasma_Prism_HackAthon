@@ -10,7 +10,10 @@
       "Bash(curl -s http://127.0.0.1:8765/health)",
       "Bash(BACKEND_URL=http://127.0.0.1:8765 USE_MOCK=0 python -m streamlit run \"F:\\\\Download\\\\PUKU\\\\PukuHackAthonProjectRootFile\\\\PLASMA_PRISM_HackAthon_Task\\\\frontend\\\\app.py\" --server.port 8766 --server.headless true --server.address 127.0.0.1)",
       "Bash(curl -s -o /dev/null -w \"Streamlit HTTP: %{http_code}\\\\n\" http://127.0.0.1:8766/)",
-      "Bash(curl -s http://127.0.0.1:8766/_stcore/health)"
+      "Bash(curl -s http://127.0.0.1:8766/_stcore/health)",
+      "Bash(npm run:*)",
+      "Bash(npx --yes netlify-cli --version)",
+      "Bash(npx --yes netlify-cli status)"
     ]
   }
 }
