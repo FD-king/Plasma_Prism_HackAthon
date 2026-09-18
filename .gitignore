@@ -1,0 +1,79 @@
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test / type / lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# --- Node / frontend -------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# npm / yarn noise
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tgz
+.npm/
+
+# Lockfiles for OTHER package managers — keep the one you actually use
+yarn.lock
+pnpm-lock.yaml
+# (package-lock.json is kept so Vite/CI installs are reproducible)
+
+# --- Environment files (never commit secrets) ------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Editor / OS noise -----------------------------------------------------
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# --- Project-specific scratch ---------------------------------------------
+Temp/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# --- Puku editor caches ----------------------------------------------------
+.puku/
+.puku-cli/
