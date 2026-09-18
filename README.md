@@ -8,6 +8,41 @@ The LLM extractor runs on **Groq** (`openai/gpt-oss-120b`); a deterministic keyw
 
 ---
 
+## 🌐 Live on Netlify (one-shot)
+
+The built `frontend/dist/` folder proxies `/api/*` to the deployed backend at
+`https://ais-dev-dxnx4xw6eerzez3fln57va-284975905594.asia-east1.run.app` via
+`frontend/public/_redirects`. So **only the frontend needs to be deployed** —
+no Python runtime required.
+
+### Option A — drag-and-drop (zero CLI, ~30 s)
+1. Open https://app.netlify.com/drop
+2. Drag the entire `frontend/dist/` folder onto the page.
+3. Done — you'll get a `*.netlify.app` URL immediately.
+
+### Option B — Git-connected auto-deploys
+1. Push this repo to GitHub/GitLab.
+2. In the Netlify UI → **Add new site → Import existing project** → pick the repo.
+3. Netlify will auto-detect `frontend/netlify.toml`:
+   - Base directory: `frontend`
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+4. Click **Deploy**. First build takes ~1 min, every push after that auto-deploys.
+
+### Option C — CLI deploy (for power users)
+```bash
+cd frontend
+npm install              # first time only
+npm run build            # → dist/
+npx netlify-cli login    # browser OAuth, one time
+npx netlify-cli deploy --dir=dist --prod
+# → prints the live URL:  https://<random>.netlify.app
+```
+
+**Custom domain:** Netlify UI → Site settings → Domain management → Add custom domain.
+
+---
+
 ## ⚡ One-minute quick start
 
 ```bash
