@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(curl -s http://127.0.0.1:8000/health)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/optimize -H \"Content-Type: application/json\" -d '{\"\"\"\"selected_profile\"\"\"\":\"\"\"\"Standard Spring School Day\"\"\"\",\"\"\"\"operator_note\"\"\"\":\"\"\"\"\"\"\"\"}')",
+      "Bash(pip uninstall:*)",
+      "WebFetch(domain:console.groq.com)",
+      "Bash(curl -s http://127.0.0.1:8765/health)",
+      "Bash(BACKEND_URL=http://127.0.0.1:8765 USE_MOCK=0 python -m streamlit run \"F:\\\\Download\\\\PUKU\\\\PukuHackAthonProjectRootFile\\\\PLASMA_PRISM_HackAthon_Task\\\\frontend\\\\app.py\" --server.port 8766 --server.headless true --server.address 127.0.0.1)",
+      "Bash(curl -s -o /dev/null -w \"Streamlit HTTP: %{http_code}\\\\n\" http://127.0.0.1:8766/)",
+      "Bash(curl -s http://127.0.0.1:8766/_stcore/health)"
+    ]
+  }
+}
