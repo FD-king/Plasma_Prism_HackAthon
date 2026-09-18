@@ -8,7 +8,7 @@ against what the React client expects.  Field units are documented inline.
 
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -192,7 +192,11 @@ class OptimizationResult(BaseModel):
 
 
 class OptimizationRequestPayload(BaseModel):
-    scenario: Optional[EnergyScenario] = None
+    # Accept ANY partial scenario dict; the route handler merges it with the
+    # canonical default scenario via `merge_scenario` so callers can tweak one
+    # knob (battery capacity, generator cap, etc.) without re-sending all 24
+    # hourly rows. Matches the TS server's behavior.
+    scenario: Optional[Dict[str, Any]] = None
     operatorNotes: List[str] = Field(default_factory=list)
     forceRefresh: bool = False
 
@@ -238,7 +242,9 @@ class HealthResponse(BaseModel):
 class BenchmarkRequest(BaseModel):
     concurrency: int = Field(10, ge=2, le=50)
     operatorNotes: Optional[List[str]] = None
-    scenario: Optional[EnergyScenario] = None
+    # Partial scenario override — merged with the canonical default by the
+    # route handler via `merge_scenario`.
+    scenario: Optional[Dict[str, Any]] = None
 
 
 class BenchmarkIndividualLatency(BaseModel):

@@ -76,30 +76,69 @@ DEFAULT_PRESET_NOTES: List[str] = [
 ]
 
 
+def _safe_float(v, default: float, lo: float = None, hi: float = None) -> float:
+    """Coerce to float, fall back to default, then clamp to [lo, hi]."""
+    try:
+        x = float(v)
+        if x != x:  # NaN
+            x = default
+    except (TypeError, ValueError):
+        x = default
+    if lo is not None:
+        x = max(lo, x)
+    if hi is not None:
+        x = min(hi, x)
+    return x
+
+
 def merge_scenario(partial: dict | None) -> EnergyScenario:
     """Merge a partial scenario dict with the default scenario.
 
     The TS server does this on every /api/optimize call; we replicate so the
     backend behaves identically when clients send `{scenario: {hourly: [...]}}`
     or omit the scenario entirely.
+
+    Partial overrides are clamped to physically sensible bounds so a stray
+    negative or zero entry from the UI doesn't blow up Pydantic validation.
     """
     base = DEFAULT_CAMPUS_SCENARIO.model_dump()
     if not partial:
         return EnergyScenario(**base)
 
-    def _merge(top_key: str) -> dict:
+    def _merge(top_key: str, sanitizers: dict | None = None) -> dict:
         sub = dict(base[top_key])
-        if isinstance(partial.get(top_key), dict):
-            sub.update(partial[top_key])
+        override = partial.get(top_key)
+        if isinstance(override, dict):
+            sub.update(override)
+        if sanitizers:
+            for k, (default, lo, hi) in sanitizers.items():
+                sub[k] = _safe_float(sub.get(k, default), default, lo, hi)
         return sub
 
     merged: dict = {
         "scenarioId": partial.get("scenarioId") or base["scenarioId"],
         "name": partial.get("name") or base["name"],
         "description": partial.get("description") or base["description"],
-        "battery": _merge("battery"),
-        "generator": _merge("generator"),
-        "grid": _merge("grid"),
+        "battery": _merge("battery", {
+            "capacityKwh": (2000.0, 1.0, 100000.0),
+            "maxChargePowerKw": (500.0, 1.0, 100000.0),
+            "maxDischargePowerKw": (500.0, 1.0, 100000.0),
+            "initialSocPercent": (50.0, 0.0, 100.0),
+            "minSocPercent": (15.0, 0.0, 100.0),
+            "maxSocPercent": (95.0, 0.0, 100.0),
+            "roundTripEfficiency": (0.92, 0.01, 1.0),
+            "degradationCostPerKwh": (0.012, 0.0, 1000.0),
+        }),
+        "generator": _merge("generator", {
+            "maxPowerKw": (600.0, 1.0, 100000.0),
+            "fuelCostPerKwh": (0.28, 0.0, 1000.0),
+            "minPowerKw": (0.0, 0.0, 100000.0),
+            "startupCost": (15.0, 0.0, 100000.0),
+        }),
+        "grid": _merge("grid", {
+            "maxImportKw": (1500.0, 1.0, 100000.0),
+            "peakDemandChargeRate": (12.50, 0.0, 1000.0),
+        }),
     }
 
     hourly = partial.get("hourly")

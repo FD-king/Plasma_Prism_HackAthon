@@ -1,0 +1,194 @@
+
+========================================================================
+1. GET /api/health  [App.tsx mount + Header pill]
+========================================================================
+
+>>> first call  [HTTP 200, 298B, 2ms]
+  raw: {"status": "healthy", "timestamp": "2026-09-18T17:07:02.000Z", "service": "Campus Energy MILP Optimization Engine", "cache": {"hits": 9, "misses": 3, "keysCount": 3, "redisConnected": false, "backend": "in-memory-redis-compatible", "uptimeSeconds": 127}, "concurrencySupported": true, "maxExecutionGuaranteeSeconds": 30}
+
+========================================================================
+2. GET /api/scenarios/default  [backend canonical scenario]
+========================================================================
+
+>>> default scenario  [HTTP 200, 3675B, 1ms]
+  success: True
+  meta: None
+
+========================================================================
+3. POST /api/optimize  [App.tsx initial mount with 3 presets]
+========================================================================
+
+>>> initial solve (forceRefresh=false)  [HTTP 200, 8463B, 1ms]
+  success: True
+  meta: {'cached': True, 'responseTimeMs': 0, 'requestId': 'opt-1789751222691-018c0', 'redisActive': False, 'timestamp': '2026-09-18T17:07:02.000Z'}
+  solver: OPTIMAL
+  cacheStatus: HIT
+  executionTimeMs: 2
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 15721.05, 'savingsAmount': 5475.59, 'savingsPercent': 25.8, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 940.0, 'peakReductionKw': 400.0, 'peakReductionPercent': 29.9, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 2558.0, 'totalGeneratorOutputKwh': 2480.0, 'gridEnergyCost': 3245.86, 'generatorFuelCost': 694.49, 'batteryDegradationCost': 30.7, 'peakDemandChargeCost': 11750.0}
+  directivesApplied: 3
+    - BATTERY_MIN_SOC h=17-23 val=60.0 unit=% valid=True
+    - GENERATOR_LOCKOUT h=22-06 val=0.0 unit=boolean valid=True
+    - GRID_IMPORT_CAP h=14-19 val=850.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 925.0, 'batteryChargeKw': 145.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 57.0, 'generatorKw': 0.0, 'netCost': 77.59}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 850.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 60.0, 'generatorKw': 490.0, 'netCost': 472.95}
+
+========================================================================
+4. POST /api/optimize  [same payload => should be HIT]
+========================================================================
+
+>>> cached repeat  [HTTP 200, 8463B, 1ms]
+  success: True
+  meta: {'cached': True, 'responseTimeMs': 0, 'requestId': 'opt-1789751222692-018c1', 'redisActive': False, 'timestamp': '2026-09-18T17:07:02.000Z'}
+  solver: OPTIMAL
+  cacheStatus: HIT
+  executionTimeMs: 2
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 15721.05, 'savingsAmount': 5475.59, 'savingsPercent': 25.8, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 940.0, 'peakReductionKw': 400.0, 'peakReductionPercent': 29.9, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 2558.0, 'totalGeneratorOutputKwh': 2480.0, 'gridEnergyCost': 3245.86, 'generatorFuelCost': 694.49, 'batteryDegradationCost': 30.7, 'peakDemandChargeCost': 11750.0}
+  directivesApplied: 3
+    - BATTERY_MIN_SOC h=17-23 val=60.0 unit=% valid=True
+    - GENERATOR_LOCKOUT h=22-06 val=0.0 unit=boolean valid=True
+    - GRID_IMPORT_CAP h=14-19 val=850.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 925.0, 'batteryChargeKw': 145.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 57.0, 'generatorKw': 0.0, 'netCost': 77.59}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 850.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 60.0, 'generatorKw': 490.0, 'netCost': 472.95}
+
+========================================================================
+5. POST /api/optimize forceRefresh=true  [the Refresh button]
+========================================================================
+
+>>> forceRefresh  [HTTP 200, 8463B, 2180ms]
+  success: True
+  meta: {'cached': False, 'responseTimeMs': 2178, 'requestId': 'opt-1789751222693-018c2', 'redisActive': False, 'timestamp': '2026-09-18T17:07:04.000Z'}
+  solver: OPTIMAL
+  cacheStatus: MISS
+  executionTimeMs: 1
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 15721.05, 'savingsAmount': 5475.59, 'savingsPercent': 25.8, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 940.0, 'peakReductionKw': 400.0, 'peakReductionPercent': 29.9, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 2558.0, 'totalGeneratorOutputKwh': 2480.0, 'gridEnergyCost': 3245.86, 'generatorFuelCost': 694.49, 'batteryDegradationCost': 30.7, 'peakDemandChargeCost': 11750.0}
+  directivesApplied: 3
+    - BATTERY_MIN_SOC h=17-23 val=60.0 unit=% valid=True
+    - GENERATOR_LOCKOUT h=22-06 val=0.0 unit=boolean valid=True
+    - GRID_IMPORT_CAP h=14-19 val=850.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 925.0, 'batteryChargeKw': 145.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 57.0, 'generatorKw': 0.0, 'netCost': 77.59}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 850.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 60.0, 'generatorKw': 490.0, 'netCost': 472.95}
+
+========================================================================
+6. POST /api/optimize empty notes  [edge case]
+========================================================================
+
+>>> empty notes  [HTTP 200, 7263B, 1ms]
+  success: True
+  meta: {'cached': True, 'responseTimeMs': 0, 'requestId': 'opt-1789751224874-02147', 'redisActive': False, 'timestamp': '2026-09-18T17:07:04.000Z'}
+  solver: OPTIMAL
+  cacheStatus: HIT
+  executionTimeMs: 2
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 13533.44, 'savingsAmount': 7663.19, 'savingsPercent': 36.2, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 740.0, 'peakReductionKw': 600.0, 'peakReductionPercent': 44.8, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 1046.0, 'totalGeneratorOutputKwh': 3395.0, 'gridEnergyCost': 3320.29, 'generatorFuelCost': 950.6, 'batteryDegradationCost': 12.55, 'peakDemandChargeCost': 9250.0}
+  directivesApplied: 0
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 525.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 255.0, 'batterySocPercent': 36.7, 'generatorKw': 0.0, 'netCost': 46.11}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 740.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 15.0, 'generatorKw': 600.0, 'netCost': 460.3}
+
+========================================================================
+7. POST /api/optimize garbage note  [heuristic fallback]
+========================================================================
+
+>>> garbage note  [HTTP 200, 7662B, 1573ms]
+  success: True
+  meta: {'cached': False, 'responseTimeMs': 1572, 'requestId': 'opt-1789751224876-02149', 'redisActive': False, 'timestamp': '2026-09-18T17:07:06.000Z'}
+  solver: OPTIMAL
+  cacheStatus: MISS
+  executionTimeMs: 1
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 13533.44, 'savingsAmount': 7663.19, 'savingsPercent': 36.2, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 740.0, 'peakReductionKw': 600.0, 'peakReductionPercent': 44.8, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 1046.0, 'totalGeneratorOutputKwh': 3395.0, 'gridEnergyCost': 3320.29, 'generatorFuelCost': 950.6, 'batteryDegradationCost': 12.55, 'peakDemandChargeCost': 9250.0}
+  directivesApplied: 1
+    - GRID_IMPORT_CAP h=14-19 val=900.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 525.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 255.0, 'batterySocPercent': 36.7, 'generatorKw': 0.0, 'netCost': 46.11}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 740.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 15.0, 'generatorKw': 600.0, 'netCost': 460.3}
+
+========================================================================
+8. POST /api/optimize custom directives (all 8 types)
+========================================================================
+
+>>> all-types custom  [HTTP 200, 9615B, 2633ms]
+  success: True
+  meta: {'cached': False, 'responseTimeMs': 2632, 'requestId': 'opt-1789751226450-0276f', 'redisActive': False, 'timestamp': '2026-09-18T17:07:09.000Z'}
+  solver: OPTIMAL
+  cacheStatus: MISS
+  executionTimeMs: 1
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 13596.7, 'savingsAmount': 7599.93, 'savingsPercent': 35.9, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 740.0, 'peakReductionKw': 600.0, 'peakReductionPercent': 44.8, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 2476.0, 'totalGeneratorOutputKwh': 4640.0, 'gridEnergyCost': 3017.79, 'generatorFuelCost': 1299.2, 'batteryDegradationCost': 29.71, 'peakDemandChargeCost': 9250.0}
+  directivesApplied: 6
+    - BATTERY_MIN_SOC h=16-23 val=80.0 unit=% valid=True
+    - BATTERY_FORCE_CHARGE h=10-14 val=200.0 unit=kW valid=True
+    - BATTERY_LOCKOUT h=23-04 val=0.0 unit=boolean valid=True
+    - GENERATOR_MANDATORY_RUN h=18-21 val=200.0 unit=kW valid=True
+    - GRID_IMPORT_CAP h=15-20 val=600.0 unit=kW valid=True
+    - LOAD_CURTAILMENT h=17-19 val=100.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 525.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 255.0, 'batterySocPercent': 36.7, 'generatorKw': 0.0, 'netCost': 46.11}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 740.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 80.0, 'generatorKw': 600.0, 'netCost': 460.3}
+
+========================================================================
+9. POST /api/optimize custom scenario  [partial override]
+========================================================================
+
+>>> custom scenario  [HTTP 200, 8445B, 1969ms]
+  success: True
+  meta: {'cached': False, 'responseTimeMs': 1968, 'requestId': 'opt-1789751229083-031b8', 'redisActive': False, 'timestamp': '2026-09-18T17:07:11.000Z'}
+  solver: OPTIMAL
+  cacheStatus: MISS
+  executionTimeMs: 2
+  totals: {'baselineCost': 21196.64, 'optimizedCost': 15856.95, 'savingsAmount': 5339.68, 'savingsPercent': 25.2, 'baselinePeakGridKw': 1340.0, 'optimizedPeakGridKw': 940.0, 'peakReductionKw': 400.0, 'peakReductionPercent': 29.9, 'totalSolarGeneratedKwh': 4150.0, 'totalSolarUsedKwh': 4150.0, 'totalBatteryThroughputKwh': 2102.0, 'totalGeneratorOutputKwh': 2706.0, 'gridEnergyCost': 3324.06, 'generatorFuelCost': 757.66, 'batteryDegradationCost': 25.23, 'peakDemandChargeCost': 11750.0}
+  directivesApplied: 3
+    - BATTERY_MIN_SOC h=17-23 val=60.0 unit=% valid=True
+    - GENERATOR_LOCKOUT h=22-06 val=0.0 unit=boolean valid=True
+    - GRID_IMPORT_CAP h=14-19 val=850.0 unit=kW valid=True
+  hourlyPlan rows: 24
+  hourlyPlan[0]: {'hour': 0, 'timeLabel': '00:00', 'gridPrice': 0.082, 'campusDemandKw': 780.0, 'solarForecastKw': 0.0, 'solarUsedKw': 0.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 925.0, 'batteryChargeKw': 145.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 39.3, 'generatorKw': 0.0, 'netCost': 77.59}
+  hourlyPlan[18] (peak): {'hour': 18, 'timeLabel': '18:00', 'gridPrice': 0.395, 'campusDemandKw': 1350.0, 'solarForecastKw': 10.0, 'solarUsedKw': 10.0, 'solarCurtailedKw': 0.0, 'gridImportKw': 850.0, 'batteryChargeKw': 0.0, 'batteryDischargeKw': 0.0, 'batterySocPercent': 60.0, 'generatorKw': 490.0, 'netCost': 472.95}
+
+========================================================================
+10. POST /api/benchmark  [slider, every concurrency step]
+========================================================================
+  concurrency= 2  HTTP 200  avg=0ms  total=0ms  hitRate=100%  n=2
+  concurrency= 4  HTTP 200  avg=0ms  total=0ms  hitRate=100%  n=4
+  concurrency= 8  HTTP 200  avg=0ms  total=0ms  hitRate=100%  n=8
+  concurrency=10  HTTP 200  avg=0ms  total=0ms  hitRate=100%  n=10
+  concurrency=16  HTTP 200  avg=0ms  total=0ms  hitRate=100%  n=16
+  concurrency=32  HTTP 200  avg=0ms  total=1ms  hitRate=100%  n=32
+  concurrency=50  HTTP 200  avg=0ms  total=1ms  hitRate=100%  n=50
+
+========================================================================
+11. POST /api/benchmark invalid concurrency values
+========================================================================
+  concurrency=1  HTTP 422  body[:200]={"detail":[{"type":"greater_than_equal","loc":["body","concurrency"],"msg":"Input should be greater than or equal to 2","input":1,"ctx":{"ge":2}}]}
+  concurrency=51  HTTP 422  body[:200]={"detail":[{"type":"less_than_equal","loc":["body","concurrency"],"msg":"Input should be less than or equal to 50","input":51,"ctx":{"le":50}}]}
+  concurrency=-5  HTTP 422  body[:200]={"detail":[{"type":"greater_than_equal","loc":["body","concurrency"],"msg":"Input should be greater than or equal to 2","input":-5,"ctx":{"ge":2}}]}
+  concurrency=0  HTTP 422  body[:200]={"detail":[{"type":"greater_than_equal","loc":["body","concurrency"],"msg":"Input should be greater than or equal to 2","input":0,"ctx":{"ge":2}}]}
+
+========================================================================
+12. POST /api/optimize malformed payload
+========================================================================
+  bad notes type  HTTP 422  body[:300]={"detail":[{"type":"list_type","loc":["body","operatorNotes"],"msg":"Input should be a valid list","input":"not a list"}]}
+  empty hourly    HTTP 200  body[:300]={"success":true,"data":{"scenarioName":"Central Campus Microgrid (Main & Manufacturing Nodes)","timestamp":"2026-09-18T17:07:04.000Z","hourlyPlan":[{"hour":0,"timeLabel":"00:00","gridPrice":0.082,"campusDemandKw":780.0,"solarForecastKw":0.0,"solarUsedKw":0.0,"solarCurtailedKw":0.0,"gridImportKw":925
+  bad battery     HTTP 500  body[:300]={"detail":{"success":false,"error":"1 validation error for EnergyScenario\nbattery.capacityKwh\n  Input should be greater than 0 [type=greater_than, input_value=-100, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than","meta":{"cached":false,"responseT
+
+========================================================================
+13. GET /api/redis-stats  [optional backend endpoint]
+========================================================================
+
+>>> redis-stats  [HTTP 200, 119B, 1ms]
+  raw: {"hits": 135, "misses": 7, "keysCount": 6, "redisConnected": false, "backend": "in-memory-redis-compatible", "uptimeSeconds": 135}
+
+========================================================================
+14. GET /api/download-zip  [Header.tsx link, likely broken]
+========================================================================
+Traceback (most recent call last):
+  File "F:\Download\PUKU\PukuHackAthonProjectRootFile\PLASMA_PRISM_HackAthon_Task\Temp\manual_frontend_test.py", line 152, in <module>
+    main()
+    ~~~~^^
+  File "F:\Download\PUKU\PukuHackAthonProjectRootFile\PLASMA_PRISM_HackAthon_Task\Temp\manual_frontend_test.py", line 143, in main
+    print(f"  HTTP {r.status_code}  body[:300]={r.text[:300]}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\ufffd' in position 34: character maps to <undefined>

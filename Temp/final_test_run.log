@@ -1,0 +1,157 @@
+
+========================================================================
+1. GET /api/health (Header pill + App.tsx mount)
+========================================================================
+  [PASS] HTTP 200  -- got 200
+  [PASS] status=healthy
+  [PASS] cache stats present
+  [PASS] concurrencySupported=true
+  [PASS] maxExecutionGuaranteeSeconds<=30
+
+========================================================================
+2. GET /api/scenarios/default
+========================================================================
+  [PASS] HTTP 200
+  [PASS] success=true
+  [PASS] scenario has 24 hourly rows
+  [PASS] scenario has battery specs
+  [PASS] 3 default notes returned
+
+========================================================================
+3. POST /api/optimize ù default 3 preset notes (initial mount)
+========================================================================
+  [PASS] HTTP 200  -- got 200
+  [PASS] success=true
+  [PASS] solver=OPTIMAL
+  [PASS] cacheStatus in {HIT,MISS}
+  [PASS] executionTimeMs is int
+  [PASS] requestId starts with opt-
+  [PASS] totals has 16 fields
+  [PASS] hourlyPlan has 24 rows
+  [PASS] 3 directives applied
+  [PASS] savingsPercent > 0
+  [PASS] optimizedCost < baselineCost
+  [PASS] all 13 hourly field names match TS contract
+  [PASS] meta has 5 fields
+
+========================================================================
+4. POST /api/optimize ù same payload -> cache HIT
+========================================================================
+  [PASS] cacheStatus=HIT on repeat
+  [PASS] meta.cached=true
+  [PASS] responseTimeMs <= 50
+
+========================================================================
+5. POST /api/optimize ù forceRefresh=true (Refresh button)
+========================================================================
+  [PASS] HTTP 200
+  [PASS] cacheStatus=MISS after force refresh
+
+========================================================================
+6. POST /api/optimize ù empty notes (edge case)
+========================================================================
+  [PASS] HTTP 200
+  [PASS] 0 directives on empty notes
+  [PASS] 24 hourly rows still returned
+
+========================================================================
+7. POST /api/optimize ù garbage note (heuristic fallback)
+========================================================================
+  [PASS] HTTP 200
+  [PASS] >=1 fallback directive applied
+
+========================================================================
+8. POST /api/optimize ù all directive types in one request
+========================================================================
+  [PASS] HTTP 200
+  [PASS] all 6 notes resolved to 6 directives (got 6)
+  [PASS] directive BATTERY_MIN_SOC isValid=True
+  [PASS] directive BATTERY_FORCE_CHARGE isValid=True
+  [PASS] directive BATTERY_LOCKOUT isValid=True
+  [PASS] directive GRID_IMPORT_CAP isValid=True
+  [PASS] directive GRID_IMPORT_CAP isValid=True
+  [PASS] directive GRID_IMPORT_CAP isValid=True
+
+========================================================================
+9. POST /api/optimize ù PARTIAL scenario override (was 422 before fix)
+========================================================================
+  [PASS] HTTP 200 (was 422)  -- got 200
+  [PASS] success=true
+  [PASS] custom scenario name applied
+
+========================================================================
+10. POST /api/optimize ù bad scenario value (was 500 before fix)
+========================================================================
+  [PASS] garbage ['battery'] -> 200 (was 500)  -- got 200
+  [PASS] garbage still returns 24 hourly rows
+  [PASS] garbage ['battery'] -> 200 (was 500)  -- got 200
+  [PASS] garbage still returns 24 hourly rows
+  [PASS] garbage ['hourly'] -> 200 (was 500)  -- got 200
+  [PASS] garbage still returns 24 hourly rows
+
+========================================================================
+11. POST /api/optimize ù bad operatorNotes type
+========================================================================
+  [PASS] HTTP 422
+
+========================================================================
+12. POST /api/benchmark ù concurrency slider values
+========================================================================
+  [PASS] concurrency=2 HTTP 200  -- got 200
+  [PASS] concurrency=2 success=true
+  [PASS] concurrency=2 n=2 latencies
+  [PASS] concurrency=4 HTTP 200  -- got 200
+  [PASS] concurrency=4 success=true
+  [PASS] concurrency=4 n=4 latencies
+  [PASS] concurrency=8 HTTP 200  -- got 200
+  [PASS] concurrency=8 success=true
+  [PASS] concurrency=8 n=8 latencies
+  [PASS] concurrency=10 HTTP 200  -- got 200
+  [PASS] concurrency=10 success=true
+  [PASS] concurrency=10 n=10 latencies
+  [PASS] concurrency=16 HTTP 200  -- got 200
+  [PASS] concurrency=16 success=true
+  [PASS] concurrency=16 n=16 latencies
+  [PASS] concurrency=32 HTTP 200  -- got 200
+  [PASS] concurrency=32 success=true
+  [PASS] concurrency=32 n=32 latencies
+  [PASS] concurrency=50 HTTP 200  -- got 200
+  [PASS] concurrency=50 success=true
+  [PASS] concurrency=50 n=50 latencies
+
+========================================================================
+13. POST /api/benchmark ù out-of-range concurrency (slider safety)
+========================================================================
+  [PASS] concurrency=1 HTTP 422
+  [PASS] concurrency=51 HTTP 422
+  [PASS] concurrency=-5 HTTP 422
+  [PASS] concurrency=0 HTTP 422
+
+========================================================================
+14. POST /api/benchmark ù partial scenario override
+========================================================================
+  [PASS] HTTP 200
+  [PASS] benchmark success=true
+
+========================================================================
+15. GET /api/redis-stats
+========================================================================
+  [PASS] HTTP 200
+  [PASS] redisConnected is bool
+  [PASS] hits is int
+
+========================================================================
+16. GET /api/download-zip (Header.tsx button ù was 404 before fix)
+========================================================================
+  [PASS] HTTP 200  -- got 200
+  [PASS] Content-Type=application/zip
+  [PASS] Content-Disposition has filename
+  [PASS] body is valid ZIP
+  [PASS] contains 25 entries
+  [PASS] all expected frontend files present (missing=set())
+  [PASS] does NOT include backend/
+  [PASS] does NOT include .env
+
+========================================================================
+ALL CHECKS PASSED ù frontend is 100% connected to backend.
+========================================================================

@@ -25,10 +25,12 @@ REDIS_URL        optional — when set, reports redisConnected=true in stats
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
 import os
 import sys
 import time
+import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -142,14 +144,34 @@ async def optimize(payload: OptimizationRequestPayload) -> OptimizationResponseP
 
     try:
         # 1) Merge with default scenario
-        scenario_dict = (
-            payload.scenario.model_dump()
-            if payload.scenario is not None
-            else None
-        )
+        # `payload.scenario` is typed as Dict[str, Any] to support partial
+        # overrides (e.g. tweaking just battery capacity).  `merge_scenario`
+        # fills in any missing keys from the canonical campus scenario AND
+        # clamps every numeric field to physically sensible bounds, so the
+        # route can never 500 on a stray negative / string / NaN value from
+        # the UI.
+        scenario_dict = payload.scenario if isinstance(payload.scenario, dict) else None
         scenario = merge_scenario(scenario_dict)
         scenario_dict = scenario.model_dump()
+    except (ValueError, Exception) as exc:  # noqa: BLE001
+        # Anything still off after sanitization → 422 with a clear error.
+        logger.warning("Scenario merge failed after sanitization: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "success": False,
+                "error": f"Invalid scenario after merging with defaults: {exc}",
+                "meta": {
+                    "cached": False,
+                    "responseTimeMs": 0,
+                    "requestId": request_id,
+                    "redisActive": cache_service.get_stats()["redisConnected"],
+                    "timestamp": _now_iso(),
+                },
+            },
+        ) from exc
 
+    try:
         notes: List[str] = [str(n).strip() for n in (payload.operatorNotes or [])]
         notes = [n for n in notes if n]
         force_refresh = bool(payload.forceRefresh)
@@ -225,7 +247,7 @@ async def optimize(payload: OptimizationRequestPayload) -> OptimizationResponseP
 @app.post("/api/benchmark", response_model=BenchmarkResponse)
 async def benchmark(payload: BenchmarkRequest) -> BenchmarkResponse:
     scenario_payload = (
-        payload.scenario.model_dump() if payload.scenario is not None else None
+        payload.scenario if isinstance(payload.scenario, dict) else None
     )
     scenario = merge_scenario(scenario_payload).model_dump()
     notes = payload.operatorNotes or DEFAULT_PRESET_NOTES
@@ -245,6 +267,92 @@ def legacy_health() -> Dict[str, Any]:
 @app.get("/profiles")
 def legacy_profiles() -> Dict[str, Any]:
     return {"profiles": ["default"]}
+
+
+# ---------------------------------------------------------------------------
+# Frontend source ZIP download (used by Header.tsx)
+# ---------------------------------------------------------------------------
+
+# Files/dirs inside the project root we never want to ship in the source bundle
+_DOWNLOAD_SKIP_DIRS = {
+    "__pycache__",
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "dist",
+    ".cache",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".next",
+    "Temp",
+}
+_DOWNLOAD_SKIP_FILES = {
+    ".env",
+    ".env.local",
+    ".env.production",
+}
+
+
+@app.get("/api/download-zip")
+def download_frontend_zip() -> Any:
+    """Stream a ZIP archive of the frontend source tree to the client.
+
+    Walks the repo root, includes everything *except* backend Python, virtualenvs,
+    caches, build output, and `.env` files. The archive is generated on demand
+    with no on-disk intermediate.
+    """
+    from fastapi.responses import StreamingResponse
+
+    _ROOT = Path(__file__).resolve().parent.parent
+    frontend_root = _ROOT / "frontend"
+
+    buf = io.BytesIO()
+    written = 0
+    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        if frontend_root.is_dir():
+            for path in sorted(frontend_root.rglob("*")):
+                if not path.is_file():
+                    continue
+                rel = path.relative_to(_ROOT).as_posix()
+                # skip generated / build artifacts
+                if any(part in _DOWNLOAD_SKIP_DIRS for part in path.parts):
+                    continue
+                if path.name in _DOWNLOAD_SKIP_FILES:
+                    continue
+                # Skip .tsbuildinfo and lock files we don't need
+                if path.suffix in {".tsbuildinfo", ".map"}:
+                    continue
+                zf.write(path, arcname=rel)
+                written += 1
+
+        # Add a short README so the bundle is self-describing
+        readme = (
+            "PRISMA Campus Energy MILP — Frontend Source Bundle\n"
+            "====================================================\n\n"
+            f"Generated at: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n"
+            f"Files: {written}\n\n"
+            "This archive contains the React + TypeScript frontend for the\n"
+            "Campus Microgrid MILP Optimization console.\n\n"
+            "Run locally:\n"
+            "  cd frontend\n"
+            "  npm install\n"
+            "  npm run dev\n\n"
+            "The dev server proxies /api/* to http://127.0.0.1:8000 by default.\n"
+        ).encode("utf-8")
+        zf.writestr("BUNDLE_README.txt", readme)
+
+    buf.seek(0)
+    logger.info("/api/download-zip served %d frontend files (%d bytes)",
+                written, buf.getbuffer().nbytes)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="prisma-energy-frontend.zip"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

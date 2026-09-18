@@ -1,0 +1,11 @@
+{
+  "operatorNotes": [
+    "Maintain battery above 80% after 16:00",
+    "Limit charge to 200 kW from 10:00 to 14:00",
+    "No battery operation between 23:00 and 04:00",
+    "Mandatory generator run at 200 kW from 18:00 to 21:00",
+    "Cap grid import to 600 kW between 15:00 and 20:00",
+    "Curtail 100 kW load between 17:00 and 19:00"
+  ],
+  "forceRefresh": true
+}
